@@ -5,6 +5,7 @@ from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message
 
 from app.common import get_translation, translation_value_exists
+from app.config import MAX_QUEUE_SIZE_PER_USER
 from app.database import save_storage
 from app.media_storage import get_message_media_payload, store_media_locally
 from app.queue import cleanup_stored_message, ensure_user_publish_task, send_to_channel, touch_last_published
@@ -29,6 +30,12 @@ def create_posts_router(state):
         user = state.users.get(user_id)
         if not user or not user.get("publish_channel_id"):
             await msg.answer(get_translation(state, user_id, "add_channels"))
+            return
+
+        # Проверка размера очереди
+        user_posts_count = sum(1 for key, data in state.storage.items() if data["user_id"] == user_id)
+        if user_posts_count >= MAX_QUEUE_SIZE_PER_USER:
+            await msg.answer(get_translation(state, user_id, "queue_full").format(MAX_QUEUE_SIZE_PER_USER))
             return
 
         text = msg.caption if msg.caption else (msg.text or "")

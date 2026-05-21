@@ -4,6 +4,7 @@ import random
 import time
 
 from .common import get_channel_link
+from .config import AUTO_PUBLISH_DELAY_MIN, AUTO_PUBLISH_DELAY_MAX
 from .database import save_storage, save_users
 from .media_storage import build_local_input_file, delete_local_file
 
@@ -93,9 +94,6 @@ def ensure_user_publish_task(state, user_id):
 
 
 async def publish_queue_for_user(state, user_id, publish_event):
-    delay_min = 30 * 60
-    delay_max = 60 * 60
-
     while True:
         await publish_event.wait()
         tasks = [message_key for message_key, _ in get_user_storage_items(state, user_id)]
@@ -106,8 +104,8 @@ async def publish_queue_for_user(state, user_id, publish_event):
         last_published = state.users[user_id].get("last_published_at", 0)
         current_time = time.time()
         time_since_last = current_time - last_published
-        if time_since_last < delay_min:
-            await asyncio.sleep(delay_min - time_since_last)
+        if time_since_last < AUTO_PUBLISH_DELAY_MIN:
+            await asyncio.sleep(AUTO_PUBLISH_DELAY_MIN - time_since_last)
 
         message_key = tasks[0]
         data = state.storage[message_key]
@@ -125,6 +123,6 @@ async def publish_queue_for_user(state, user_id, publish_event):
             del state.storage[message_key]
             await save_storage(state)
             await touch_last_published(state, user_id)
-            await asyncio.sleep(random.randint(delay_min, delay_max))
+            await asyncio.sleep(random.randint(AUTO_PUBLISH_DELAY_MIN, AUTO_PUBLISH_DELAY_MAX))
         except Exception as exc:
             logging.error(f"Ошибка публикации: {exc}")
