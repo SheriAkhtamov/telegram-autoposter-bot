@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: autoposter-bot
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/autoposter
+      - ADMIN_IDS=${ADMIN_IDS}
+      - PANEL_HOST=0.0.0.0
+      - PANEL_PORT=8080
+      - PANEL_BASE_URL=${PANEL_BASE_URL:-http://localhost:8080}
+      - AUTO_PUBLISH_DELAY_MIN=${AUTO_PUBLISH_DELAY_MIN:-1800}
+      - AUTO_PUBLISH_DELAY_MAX=${AUTO_PUBLISH_DELAY_MAX:-3600}
+    ports:
+      - "8080:8080"
+    volumes:
+      - media_storage:/app/media_storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - autoposter-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: autoposter-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=autoposter
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d autoposter"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - autoposter-network
+
+volumes:
+  media_storage:
+  postgres_data:
+
+networks:
+  autoposter-network:
+    driver: bridge

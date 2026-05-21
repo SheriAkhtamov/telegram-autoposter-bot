@@ -85,7 +85,8 @@ TRANSLATIONS = {
         "panel_login_taken": "Этот логин уже занят. Выбери другой.",
         "panel_login_changed": "Логин панели обновлён.",
         "panel_password_changed": "Пароль панели обновлён.",
-        "panel_change_cancelled": "Изменение данных панели отменено."
+        "panel_change_cancelled": "Изменение данных панели отменено.",
+        "queue_full": "⚠️ Очередь переполнена! Максимум {} постов. Удалите старые задачи или дождитесь публикации."
     },
     "en": {
         "select_language": "Select language:",
@@ -171,7 +172,8 @@ TRANSLATIONS = {
         "panel_login_taken": "This login is already taken. Choose another one.",
         "panel_login_changed": "Panel login updated.",
         "panel_password_changed": "Panel password updated.",
-        "panel_change_cancelled": "Panel credential update cancelled."
+        "panel_change_cancelled": "Panel credential update cancelled.",
+        "queue_full": "⚠️ Queue is full! Maximum {} posts. Remove old tasks or wait for publication."
     },
     "uz": {
         "select_language": "Tilni tanlang:",

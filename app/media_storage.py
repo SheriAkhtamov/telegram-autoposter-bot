@@ -1,10 +1,11 @@
+import logging
 import mimetypes
 import re
 from pathlib import Path
 
 from aiogram.types import FSInputFile
 
-from .config import DEFAULT_EXTENSIONS, MEDIA_ROOT
+from .config import DEFAULT_EXTENSIONS, MEDIA_ROOT, MAX_FILE_SIZE_MB
 
 
 def sanitize_filename(file_name):
@@ -74,13 +75,21 @@ def guess_uploaded_file_type(file_name=None, mime_type=None):
 
 def store_uploaded_file_locally(user_id, message_key, uploaded_file):
     original_file_name = uploaded_file.filename or "upload.bin"
+    
+    # Проверка размера файла
+    uploaded_file.file.seek(0, 2)  # Переместиться в конец
+    file_size = uploaded_file.file.tell()
+    uploaded_file.file.seek(0)  # Вернуться в начало
+    max_size_bytes = MAX_FILE_SIZE_MB * 1024 * 1024
+    if file_size > max_size_bytes:
+        raise ValueError(f"File size exceeds {MAX_FILE_SIZE_MB}MB limit")
+    
     file_type = guess_uploaded_file_type(original_file_name, uploaded_file.content_type)
     user_dir = MEDIA_ROOT / user_id
     user_dir.mkdir(parents=True, exist_ok=True)
     storage_file_name = build_storage_filename(message_key, file_type, original_file_name, uploaded_file.content_type)
     file_path = user_dir / storage_file_name
 
-    uploaded_file.file.seek(0)
     with open(file_path, "wb") as destination:
         while True:
             chunk = uploaded_file.file.read(65536)
